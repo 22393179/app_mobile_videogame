@@ -1,10 +1,62 @@
-// lib/screens/registro_screen.dart
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../main.dart'; 
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
+import '../main.dart';
 
-class RegistroScreen extends StatelessWidget {
+class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});
+
+  @override
+  State<RegistroScreen> createState() => _RegistroScreenState();
+}
+
+class _RegistroScreenState extends State<RegistroScreen> {
+  final _usuarioController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
+  bool _loading = false;
+
+  Future<void> _registrarUsuario() async {
+    final nombre = _usuarioController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (password != _confirmController.text.trim()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Las contraseñas no coinciden")),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    final url = Uri.parse('$apiBaseUrl/auth/register');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "email": email,
+        "password": password,
+        "displayName": nombre,
+      }),
+    );
+
+    setState(() => _loading = false);
+
+    if (response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Usuario registrado con éxito")),
+      );
+      Navigator.pop(context);
+    } else {
+      final data = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${data['error'] ?? 'Error al registrar'}")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,79 +74,40 @@ class RegistroScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Text('Crear Cuenta',
+                    style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: kColorMarronOscuro)),
                 SizedBox(height: screenHeight * 0.03),
-                Text(
-                  'Crear Cuenta',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: kColorMarronOscuro,
-                    fontFamily: 'PixelifySans',
-                  ),
+
+                TextField(
+                  controller: _usuarioController,
+                  decoration: const InputDecoration(labelText: 'Nombre de usuario'),
+                ),
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                ),
+                TextField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(labelText: 'Contraseña'),
+                  obscureText: true,
+                ),
+                TextField(
+                  controller: _confirmController,
+                  decoration: const InputDecoration(labelText: 'Confirmar contraseña'),
+                  obscureText: true,
                 ),
                 SizedBox(height: screenHeight * 0.04),
-                // Campo de Usuario
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Nombre de Usuario',
-                    hintText: 'ej. agricultorValiente',
-                    prefixIcon: Icon(Icons.person_add, color: kColorMarronOscuro),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.03),
-                // Campo de Email
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'ej. tuemail@example.com',
-                    prefixIcon: Icon(Icons.email, color: kColorMarronOscuro),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                SizedBox(height: screenHeight * 0.03),
-                // Campo de Contraseña
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    hintText: 'Crea una contraseña segura',
-                    prefixIcon: Icon(Icons.lock, color: kColorMarronOscuro),
-                  ),
-                  obscureText: true,
-                ),
-                SizedBox(height: screenHeight * 0.03),
-                // Campo de Confirmar Contraseña
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Confirmar Contraseña',
-                    hintText: 'Repite tu contraseña',
-                    prefixIcon: Icon(Icons.lock_reset, color: kColorMarronOscuro),
-                  ),
-                  obscureText: true,
-                ),
-                SizedBox(height: screenHeight * 0.05),
-                // Botón Registrarse
+
                 SizedBox(
                   width: screenWidth * 0.7,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('REGISTRARSE'),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.03),
-                // Opción para volver a Login
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    '¿Ya tienes cuenta? Inicia sesión',
-                    style: TextStyle(
-                      color: kColorMarronOscuro,
-                      decoration: TextDecoration.underline,
-                      fontFamily: 'PixelifySans',
-                    ),
+                    onPressed: _loading ? null : _registrarUsuario,
+                    child: _loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('REGISTRARSE'),
                   ),
                 ),
               ],

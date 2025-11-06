@@ -1,12 +1,65 @@
-// lib/screens/login_screen.dart
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../main.dart'; 
-import 'registro_screen.dart';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import 'menu_screen.dart';
+import 'registro_screen.dart';
+import '../main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _loading = false;
+
+  Future<void> _login() async {
+    setState(() => _loading = true);
+
+    final url = Uri.parse('$apiBaseUrl/auth/login');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "email": _emailController.text.trim(),
+        "password": _passwordController.text.trim(),
+      }),
+    );
+
+    setState(() => _loading = false);
+
+    if (response.statusCode == 200) {
+      // Primero decodificamos la respuesta
+      final data = jsonDecode(response.body);
+
+      // Luego guardamos el token y uid localmente
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('idToken', data['idToken']);
+      await prefs.setString('uid', data['uid']);
+
+      // Mensaje de éxito y navegación
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Login exitoso")));
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MenuScreen()),
+      );
+    } else {
+      final data = jsonDecode(response.body);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${data['error']}")));
+    }
+  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -16,215 +69,52 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        title: Image.asset('assets/images/thelastfarm.png', height: 40),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: const AssetImage('assets/images/farm_background.png'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.4),
-              BlendMode.darken,
-            ),
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(25.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo con efecto de brillo
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: kColorDorado.withOpacity(0.2),
-                          spreadRadius: 5,
-                          blurRadius: 15,
-                        ),
-                      ],
-                    ),
-                    child: Image.asset(
-                      'assets/images/thelastfarm.png',
-                      height: screenHeight * 0.15,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(25.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Iniciar Sesión',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: kColorMarronOscuro,
+                  ),
+                ),
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                ),
+                TextField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(labelText: 'Contraseña'),
+                  obscureText: true,
+                ),
+                SizedBox(height: screenHeight * 0.05),
+                SizedBox(
+                  width: screenWidth * 0.7,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _login,
+                    child: _loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('INGRESAR'),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RegistroScreen(),
                     ),
                   ),
-                  SizedBox(height: screenHeight * 0.04),
-                  // Contenedor principal con efecto de vidrio
-                  Container(
-                    padding: const EdgeInsets.all(25),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          spreadRadius: 5,
-                          blurRadius: 15,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'Iniciar Sesión',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: kColorMarronOscuro,
-                            fontFamily: 'PixelifySans',
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.03),
-                        // Campo de Email/Usuario mejorado
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: kColorMarronOscuro.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              labelText: 'Usuario o Email',
-                              hintText: 'ej. nombredeusuario o email@example.com',
-                              prefixIcon: Container(
-                                padding: const EdgeInsets.all(12),
-                                child: Icon(Icons.person_outline, 
-                                  color: kColorMarronOscuro,
-                                  size: 24,
-                                ),
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.03),
-                        // Campo de Contraseña mejorado
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: kColorMarronOscuro.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              labelText: 'Contraseña',
-                              hintText: 'Introduce tu contraseña',
-                              prefixIcon: Container(
-                                padding: const EdgeInsets.all(12),
-                                child: Icon(Icons.lock_outline,
-                                  color: kColorMarronOscuro,
-                                  size: 24,
-                                ),
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                            ),
-                            obscureText: true,
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.05),
-                        // Botón Iniciar Sesión mejorado
-                        Container(
-                          width: double.infinity,
-                          height: 55,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                kColorVerdeClaro,
-                                kColorVerdeClaro.withGreen(150),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: kColorVerdeClaro.withOpacity(0.5),
-                                spreadRadius: 1,
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => const MenuScreen()),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                            ),
-                            child: const Text(
-                              'INGRESAR',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                SizedBox(height: screenHeight * 0.03),
-                        // Opción para registrarse
-                        TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const RegistroScreen()),
-                            );
-                          },
-                          child: Text(
-                            '¿No tienes cuenta? Regístrate aquí',
-                            style: TextStyle(
-                              color: kColorMarronOscuro,
-                              decoration: TextDecoration.underline,
-                              fontFamily: 'PixelifySans',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                  child: const Text('¿No tienes cuenta? Regístrate aquí'),
+                ),
+              ],
             ),
           ),
         ),
