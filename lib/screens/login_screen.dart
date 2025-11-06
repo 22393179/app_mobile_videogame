@@ -1,12 +1,65 @@
-// lib/screens/login_screen.dart
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../main.dart'; 
-import 'registro_screen.dart';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import 'menu_screen.dart';
+import 'registro_screen.dart';
+import '../main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _loading = false;
+
+  Future<void> _login() async {
+    setState(() => _loading = true);
+
+    final url = Uri.parse('$apiBaseUrl/auth/login');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "email": _emailController.text.trim(),
+        "password": _passwordController.text.trim(),
+      }),
+    );
+
+    setState(() => _loading = false);
+
+    if (response.statusCode == 200) {
+      // Primero decodificamos la respuesta
+      final data = jsonDecode(response.body);
+
+      // Luego guardamos el token y uid localmente
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('idToken', data['idToken']);
+      await prefs.setString('uid', data['uid']);
+
+      // Mensaje de éxito y navegación
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Login exitoso")));
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MenuScreen()),
+      );
+    } else {
+      final data = jsonDecode(response.body);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${data['error']}")));
+    }
+  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -24,67 +77,41 @@ class LoginScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(height: screenHeight * 0.05),
                 Text(
                   'Iniciar Sesión',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: kColorMarronOscuro,
-                    fontFamily: 'PixelifySans',
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.05),
-                // Campo de Email/Usuario
                 TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Usuario o Email',
-                    hintText: 'ej. nombredeusuario o email@example.com',
-                    prefixIcon: Icon(Icons.person, color: kColorMarronOscuro),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
                 ),
-                SizedBox(height: screenHeight * 0.03),
-                // Campo de Contraseña
                 TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    hintText: 'Introduce tu contraseña',
-                    prefixIcon: Icon(Icons.lock, color: kColorMarronOscuro),
-                  ),
+                  controller: _passwordController,
+                  decoration: const InputDecoration(labelText: 'Contraseña'),
                   obscureText: true,
                 ),
                 SizedBox(height: screenHeight * 0.05),
-                // Botón Iniciar Sesión
                 SizedBox(
                   width: screenWidth * 0.7,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MenuScreen()),
-                      );
-                    },
-                    child: const Text('INGRESAR'),
+                    onPressed: _loading ? null : _login,
+                    child: _loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('INGRESAR'),
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.03),
-                // Opción para registrarse
                 TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const RegistroScreen()),
-                    );
-                  },
-                  child: Text(
-                    '¿No tienes cuenta? Regístrate aquí',
-                    style: TextStyle(
-                      color: kColorMarronOscuro,
-                      decoration: TextDecoration.underline,
-                      fontFamily: 'PixelifySans',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RegistroScreen(),
                     ),
                   ),
+                  child: const Text('¿No tienes cuenta? Regístrate aquí'),
                 ),
               ],
             ),
