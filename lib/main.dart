@@ -16,10 +16,11 @@ void main() {
 }
 
 // Colores de la paleta (Públicos y accesibles)
-const Color kColorBeigeFondo = Color(0xFFF0E5D4); 
-const Color kColorMarronOscuro = Color(0xFF8A5A44);
-const Color kColorVerdeClaro = Color(0xFF8BC34A);
-const Color kColorGrisBoton = Color(0xFF90A4AE);
+const Color kColorBeigeFondo = Color(0xFFFFF8E7);  // Beige más suave
+const Color kColorMarronOscuro = Color(0xFF654321); // Marrón más cálido
+const Color kColorVerdeClaro = Color(0xFF95C23D);   // Verde más natural
+const Color kColorDorado = Color(0xFFFFB74D);       // Dorado para logros
+const Color kColorGrisClaro = Color(0xFFE0E0E0);    // Gris para elementos inactivos
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -32,18 +33,22 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.brown,
         scaffoldBackgroundColor: kColorBeigeFondo,
-        fontFamily: 'PixelifySans', // Asegúrate de registrar la fuente en pubspec.yaml
-        appBarTheme: const AppBarTheme(
+        fontFamily: 'PixelifySans',
+        useMaterial3: true, // Activar Material Design 3
+        appBarTheme: AppBarTheme(
           backgroundColor: kColorBeigeFondo,
           elevation: 0,
           centerTitle: true,
-          titleTextStyle: TextStyle(
+          titleTextStyle: const TextStyle(
             color: kColorMarronOscuro,
             fontSize: 24,
             fontWeight: FontWeight.bold,
             fontFamily: 'PixelifySans',
           ),
-          iconTheme: IconThemeData(color: kColorMarronOscuro),
+          iconTheme: const IconThemeData(color: kColorMarronOscuro),
+          // Efecto de vidrio esmerilado
+          surfaceTintColor: Colors.white.withOpacity(0.1),
+          shadowColor: Colors.black.withOpacity(0.1),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
