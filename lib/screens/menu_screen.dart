@@ -1,56 +1,54 @@
-// lib/screens/menu_screen.dart
-
 import 'package:flutter/material.dart';
-import '../main.dart'; 
-import '../widgets/bottom_nav_bar.dart'; 
+import '../main.dart';
+import '../widgets/bottom_nav_bar.dart';
 import 'cultivos_screen.dart';
 import 'logros_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
 
-  Widget _buildMenuButton(String text, IconData icon, VoidCallback onPressed) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+  // --- WIDGET COMPLETAMENTE NUEVO PARA LAS SECCIONES ---
+  /// Crea una tarjeta de navegación grande, coherente con las tarjetas del perfil.
+  Widget _buildMenuCard({
+    required BuildContext context,
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
       child: Container(
-        width: double.infinity,
-        height: 100, // Altura fija para todos los botones
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: ElevatedButton(
-          onPressed: onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: kColorMarronOscuro,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-              side: BorderSide(color: kColorDorado, width: 2),
+        child: Row(
+          children: [
+            // Icono con fondo de color
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: iconColor.withOpacity(0.1),
+              child: Icon(icon, size: 28, color: iconColor),
             ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
+            const SizedBox(width: 16),
+            // Textos
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: kColorDorado.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(icon, size: 32, color: kColorDorado),
-                  ),
-                  const SizedBox(width: 16),
                   Text(
-                    text,
+                    title,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -58,11 +56,22 @@ class MenuScreen extends StatelessWidget {
                       fontFamily: 'PixelifySans',
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: kColorMarronOscuro.withOpacity(0.7),
+                      fontFamily: 'PixelifySans',
+                    ),
+                  ),
                 ],
               ),
-              Icon(Icons.arrow_forward_ios, color: kColorMarronOscuro.withOpacity(0.5)),
-            ],
-          ),
+            ),
+            // Flecha
+            Icon(Icons.arrow_forward_ios,
+                color: kColorMarronOscuro.withOpacity(0.5), size: 16),
+          ],
         ),
       ),
     );
@@ -71,79 +80,95 @@ class MenuScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Image.asset('assets/images/thelastfarm.png', height: 40),
-        automaticallyImplyLeading: false,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: const AssetImage('assets/images/farm_background.png'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.white.withOpacity(0.9),
-              BlendMode.lighten,
-            ),
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                const SizedBox(height: 20),
-                Container(
-                  margin: const EdgeInsets.all(20),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        '¡Bienvenido a The Last Farm!',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: kColorMarronOscuro,
-                          fontFamily: 'PixelifySans',
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildMenuButton(
-                        'Cosecha',
-                        Icons.grass,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const CultivosScreen()),
-                          );
-                        },
-                      ),
-                      _buildMenuButton(
-                        'Logros',
-                        Icons.emoji_events,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LogrosScreen()),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+      // 1. Fondo coherente con el resto de la app
+      backgroundColor: kColorBeigeFondo,
+      // 2. ¡AppBar eliminada!
+      appBar: null,
+      // 3. Cuerpo de la pantalla
+      body: SafeArea(
+        child: LayoutBuilder( // 1. Usar LayoutBuilder para obtener la altura
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: ConstrainedBox( // 2. Forzar altura mínima
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
                 ),
-              ],
-            ),
-          ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center, // 3. Centrar verticalmente
+                  crossAxisAlignment: CrossAxisAlignment.center, // 4. Centrar logo y título
+                  children: <Widget>[
+                    // --- INICIO DE LOGO ---
+                    // 5. Se añade el logo con brillo
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: kColorDorado.withOpacity(0.5), // Brillo
+                            spreadRadius: 5,
+                            blurRadius: 20, // Difuminado
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/images/thelastfarm.png',
+                        height: 120, // 6. Un tamaño con presencia
+                      ),
+                    ),
+                    const SizedBox(height: 30), // Espacio
+                    // --- FIN DE LOGO ---
+
+                    // 4. Título de la pantalla (CORREGIDO)
+                    const Text(
+                      'Menú Principal',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: kColorMarronOscuro,
+                        fontFamily: 'PixelifySans',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 25),
+
+                    // 5. Tarjeta de "Cosecha" (AÑADIDA)
+                    _buildMenuCard(
+                      context: context,
+                      title: 'Cosecha',
+                      description: 'Planta y recoge tus cultivos.',
+                      icon: Icons.grass,
+                      iconColor: kColorVerdeClaro,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const CultivosScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 15),
+
+                    // 6. Tarjeta de "Logros" (AÑADIDA Y CORREGIDA)
+                    _buildMenuCard(
+                      context: context,
+                      title: 'Logros',
+                      description: 'Revisa tus medallas y trofeos.',
+                      icon: Icons.emoji_events,
+                      iconColor: kColorDorado,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LogrosScreen()),
+                        );
+                      },
+                    ),
+                  ], // Cierre de children
+                ), // Cierre de Column
+              ), // Cierre de ConstrainedBox
+            ); // Cierre de SingleChildScrollView
+          },
         ),
       ),
       bottomNavigationBar: buildBottomNavBar(context, 1),

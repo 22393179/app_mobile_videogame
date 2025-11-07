@@ -1,2 +1,3 @@
-//const String apiBaseUrl = "http://10.0.2.2:4000";
-const String apiBaseUrl = "http://localhost:4000";
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+final apiBaseUrl = dotenv.env['API_BASE_URL']!;

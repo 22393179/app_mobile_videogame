@@ -243,7 +243,6 @@ class CultivosScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Image.asset('assets/images/thelastfarm.png', height: 40),
       ),
       body: Container(
         decoration: BoxDecoration(

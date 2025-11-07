@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart';
-import '../widgets/bottom_nav_bar.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import 'menu_screen.dart'; // <--- Importa tu MenuScreen
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -35,8 +33,25 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Sesión cerrada correctamente")),
+        SnackBar(
+          content: Row(
+            children: const [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 10),
+              Expanded(child: Text("Has cerrado sesión desde tu perfil")),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
       );
+      // Pequeño delay para que se vea el SnackBar antes de ir al login
+      await Future.delayed(const Duration(milliseconds: 500));
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -45,24 +60,54 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
-  Widget _buildResumenDetail(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              color: kColorMarronOscuro,
-              fontFamily: 'PixelifySans',
-            ),
+  // --- Tarjeta de estadísticas ---
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color kColorVerdeClaro,
+    Color kColorMarronOscuro,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 1,
+            blurRadius: 5,
           ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: kColorVerdeClaro, size: 20),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: kColorMarronOscuro.withOpacity(0.8),
+                    fontFamily: 'PixelifySans',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           Text(
             value,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: kColorMarronOscuro,
               fontFamily: 'PixelifySans',
@@ -73,24 +118,85 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
+  // --- Fila de información ---
+  Widget _buildInfoRow(String label, String value, Color kColorMarronOscuro) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                color: kColorMarronOscuro.withOpacity(0.7),
+                fontFamily: 'PixelifySans',
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: kColorMarronOscuro,
+                fontFamily: 'PixelifySans',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // --- Colores ---
+    const kColorCrema = Color(0xFFF5EFE6);
+    const kColorMarronOscuro = Color(0xFF6B4B3E);
+    const kColorVerdeClaro = Color(0xFF8BC34A);
+
     if (_loading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        backgroundColor: kColorCrema,
+        body: Center(
+          child: CircularProgressIndicator(color: kColorMarronOscuro),
+        ),
       );
     }
 
     final auth = userData?['auth'] ?? {};
     final profile = userData?['profile'] ?? {};
-    final stats = profile['profile'] ?? {}; // nivel, xp, etc.
+    final stats = profile['profile'] ?? {};
+    final String displayName =
+        auth['name'] ?? profile['displayName'] ?? 'Jugador';
+    final String displayLetter =
+        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'J';
 
     return Scaffold(
+      backgroundColor: kColorCrema,
       appBar: AppBar(
-        title: Image.asset('assets/images/thelastfarm.png', height: 40),
+        backgroundColor: kColorCrema,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: kColorMarronOscuro),
+        // Flecha de regreso manda al MenuScreen
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: kColorMarronOscuro),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MenuScreen()),
+            );
+          },
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: kColorMarronOscuro),
             tooltip: 'Cerrar sesión',
             onPressed: _logout,
           ),
@@ -102,64 +208,88 @@ class _PerfilScreenState extends State<PerfilScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              // Avatar
               CircleAvatar(
                 radius: MediaQuery.of(context).size.width * 0.18,
                 backgroundColor: kColorMarronOscuro,
-                child: const Icon(Icons.person, size: 70, color: Colors.white),
+                child: Text(
+                  displayLetter,
+                  style: const TextStyle(
+                    fontSize: 70,
+                    color: Colors.white,
+                    fontFamily: 'PixelifySans',
+                  ),
+                ),
               ),
               const SizedBox(height: 15),
-
-              // Nombre del jugador
               Text(
-                auth['name'] ?? profile['displayName'] ?? 'Jugador',
-                style: TextStyle(
+                displayName,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: kColorMarronOscuro,
                   fontFamily: 'PixelifySans',
                 ),
               ),
-
-              const SizedBox(height: 40),
-
-              // Contenedor de resumen
+              const SizedBox(height: 30),
+              // Tarjetas de estadísticas
+              Row(
+                children: [
+                  Flexible(
+                    child: _buildStatCard(
+                        'NIVEL',
+                        '${stats['level'] ?? 1}',
+                        Icons.star_border_outlined,
+                        kColorVerdeClaro,
+                        kColorMarronOscuro),
+                  ),
+                  const SizedBox(width: 15),
+                  Flexible(
+                    child: _buildStatCard(
+                        'EXPERIENCIA',
+                        '${stats['xp'] ?? 0}',
+                        Icons.trending_up_rounded,
+                        kColorVerdeClaro,
+                        kColorMarronOscuro),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30),
+              // Contenedor de información
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(18.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
                 decoration: BoxDecoration(
-                  border: Border.all(color: kColorMarronOscuro, width: 4.0),
-                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      spreadRadius: 2,
+                      color: Colors.black.withOpacity(0.05),
+                      spreadRadius: 1,
                       blurRadius: 5,
-                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Resumen',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: kColorMarronOscuro,
-                        fontFamily: 'PixelifySans',
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10.0),
+                      child: Text(
+                        'Información de la Cuenta',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: kColorMarronOscuro,
+                          fontFamily: 'PixelifySans',
+                        ),
                       ),
                     ),
-                    const Divider(
-                      color: kColorMarronOscuro,
-                      thickness: 2,
-                      height: 25,
-                    ),
-                    _buildResumenDetail('Nivel', '${stats['level'] ?? 1}'),
-                    _buildResumenDetail('Experiencia (XP)', '${stats['xp'] ?? 0}'),
-                    _buildResumenDetail('Email', '${auth['email'] ?? ''}'),
-                    _buildResumenDetail('UID', '${auth['uid'] ?? ''}'),
+                    Divider(color: kColorMarronOscuro.withOpacity(0.2)),
+                    _buildInfoRow('Email', '${auth['email'] ?? ''}', kColorMarronOscuro),
+                    Divider(height: 1, color: kColorMarronOscuro.withOpacity(0.1)),
+                    _buildInfoRow('UID', '${auth['uid'] ?? ''}', kColorMarronOscuro),
                   ],
                 ),
               ),
@@ -167,7 +297,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: buildBottomNavBar(context, 2),
     );
   }
 }

@@ -1,0 +1,4 @@
+fonts:
+  - family: PixelifySans
+    fonts:
+      - asset: assets/fonts/PixelifySans-Bold.ttf

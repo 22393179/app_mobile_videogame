@@ -1,7 +1,6 @@
-// lib/widgets/bottom_nav_bar.dart
-
 import 'package:flutter/material.dart';
-import '../main.dart'; 
+import 'package:flutter/services.dart'; // Importado para HapticFeedback
+import '../main.dart';
 import '../screens/cultivos_screen.dart';
 import '../screens/menu_screen.dart';
 import '../screens/perfil_screen.dart';
@@ -27,7 +26,7 @@ Widget buildBottomNavBar(BuildContext context, int currentIndex) {
         type: BottomNavigationBarType.fixed,
         elevation: 0,
         selectedLabelStyle: const TextStyle(
-          fontFamily: 'PixelifySans', 
+          fontFamily: 'PixelifySans',
           fontWeight: FontWeight.bold,
           fontSize: 12,
         ),
@@ -35,77 +34,67 @@ Widget buildBottomNavBar(BuildContext context, int currentIndex) {
           fontFamily: 'PixelifySans',
           fontSize: 11,
         ),
-    onTap: (index) {
-      if (index == 0 && currentIndex != 0) { 
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CultivosScreen()));
-      } else if (index == 1 && currentIndex != 1) { 
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MenuScreen()));
-      } else if (index == 2 && currentIndex != 2) { 
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PerfilScreen()));
-      }
-    },
-    items: <BottomNavigationBarItem>[
-      BottomNavigationBarItem(
-        icon: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: currentIndex == 0 ? kColorDorado.withOpacity(0.2) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+        onTap: (index) {
+          // --- MEJORA: Feedback Táctil ---
+          HapticFeedback.lightImpact();
+
+          // Lógica de navegación (sin cambios, ya estaba perfecta)
+          if (index == 0 && currentIndex != 0) {
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const CultivosScreen()));
+          } else if (index == 1 && currentIndex != 1) {
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (context) => const MenuScreen()));
+          } else if (index == 2 && currentIndex != 2) {
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (context) => const PerfilScreen()));
+          }
+        },
+
+        // --- MEJORA: Lógica de ítems simplificada ---
+        items: <BottomNavigationBarItem>[
+          // 1. Cultivos
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.grass_outlined),
+            activeIcon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: kColorDorado.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.grass),
+            ),
+            label: 'Cultivos',
           ),
-          child: const Icon(Icons.grass_outlined),
-        ),
-        activeIcon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: kColorDorado.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
+          // 2. Menú
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.menu_book_outlined),
+            activeIcon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: kColorDorado.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.menu_book),
+            ),
+            label: 'Menú',
           ),
-          child: const Icon(Icons.grass),
-        ),
-        label: 'Cultivos',
-      ),
-      BottomNavigationBarItem(
-        icon: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: currentIndex == 1 ? kColorDorado.withOpacity(0.2) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+          // 3. Perfil
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person_outline),
+            activeIcon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: kColorDorado.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.person),
+            ),
+            label: 'Perfil',
           ),
-          child: const Icon(Icons.menu_book_outlined),
-        ),
-        activeIcon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: kColorDorado.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.menu_book),
-        ),
-        label: 'Menú',
-      ),
-      BottomNavigationBarItem(
-        icon: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: currentIndex == 2 ? kColorDorado.withOpacity(0.2) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.person_outline),
-        ),
-        activeIcon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: kColorDorado.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.person),
-        ),
-        label: 'Perfil',
-      ),
-    ],
+        ],
       ),
     ),
   );
