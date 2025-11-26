@@ -2,31 +2,35 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../widgets/bottom_nav_bar.dart';
 
-class LogrosScreen extends StatelessWidget {
-  const LogrosScreen({super.key});
+class NovedadesScreen extends StatelessWidget {
+  const NovedadesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Logros'),
+        title: const Text(
+          'Novedades',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => Navigator.pop(context),
         ),
       ),
+
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Sección de Progreso General
+          // CABECERA — Novedades del videojuego
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(20),
+              color: Colors.white.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.08),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -36,112 +40,109 @@ class LogrosScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Progreso General',
+                  'Próximas Mejoras del Juego',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: kColorMarronOscuro,
                   ),
                 ),
-                const SizedBox(height: 16),
-                LinearProgressIndicator(
-                  value: 0.65, // Ejemplo de progreso
-                  backgroundColor: kColorGrisClaro,
-                  valueColor: AlwaysStoppedAnimation<Color>(kColorDorado),
-                  borderRadius: BorderRadius.circular(10),
-                  minHeight: 10,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  '13/20 Logros Desbloqueados',
+                const SizedBox(height: 6),
+                Text(
+                  'Mantente al día con las actualizaciones y nuevas funciones del videojuego 🎮',
                   style: TextStyle(
-                    color: kColorMarronOscuro,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: Colors.grey[700],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          // Lista de Logros
-          ...List.generate(5, (index) => _buildLogro(
-            title: _logrosEjemplo[index]['title']!,
-            description: _logrosEjemplo[index]['description']!,
-            progress: _logrosEjemplo[index]['progress']!,
-            isUnlocked: _logrosEjemplo[index]['isUnlocked']!,
-          )),
+
+          const SizedBox(height: 20),
+
+          // LISTA
+          ..._novedades.map((n) => _buildNovedadCard(n)),
         ],
       ),
-      bottomNavigationBar: buildBottomNavBar(context, 1), // Ajusta el índice según necesites
+
+      bottomNavigationBar: buildBottomNavBar(context, 1),
     );
   }
 
-  Widget _buildLogro({
-    required String title,
-    required String description,
-    required double progress,
-    required bool isUnlocked,
-  }) {
+  /// Tarjeta de cada novedad
+  Widget _buildNovedadCard(Map<String, dynamic> n) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isUnlocked ? kColorDorado.withOpacity(0.1) : Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: isUnlocked ? kColorDorado : kColorGrisClaro,
-          width: 2,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ICONO + TÍTULO
           Row(
             children: [
-              Icon(
-                isUnlocked ? Icons.emoji_events : Icons.lock_outline,
-                color: isUnlocked ? kColorDorado : kColorGrisClaro,
-                size: 24,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: kColorDorado.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  n['icon'],
+                  color: kColorDorado,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  title,
-                  style: TextStyle(
+                  n['title'],
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: isUnlocked ? kColorMarronOscuro : kColorGrisClaro,
+                    color: kColorMarronOscuro,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 10),
+
+          // DESCRIPCIÓN
           Text(
-            description,
+            n['description'],
             style: TextStyle(
-              color: isUnlocked ? kColorMarronOscuro.withOpacity(0.8) : kColorGrisClaro,
               fontSize: 14,
+              color: Colors.grey[800],
             ),
           ),
+
           const SizedBox(height: 12),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: kColorGrisClaro.withOpacity(0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(
-              isUnlocked ? kColorDorado : kColorGrisClaro,
-            ),
-            borderRadius: BorderRadius.circular(10),
-            minHeight: 6,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${(progress * 100).toInt()}%',
-            style: TextStyle(
-              color: isUnlocked ? kColorDorado : kColorGrisClaro,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
+
+          // FECHA
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                n['date'],
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -149,35 +150,42 @@ class LogrosScreen extends StatelessWidget {
   }
 }
 
-final List<Map<String, dynamic>> _logrosEjemplo = [
+/// Novedades del videojuego — EDITABLES
+final List<Map<String, dynamic>> _novedades = [
   {
-    'title': 'Granjero Novato',
-    'description': 'Cultiva tu primera cosecha',
-    'progress': 1.0,
-    'isUnlocked': true,
+    'title': 'Nueva actualización 1.2 en camino 🚀',
+    'description': 'Llegará un nuevo mapa exploratorio, correcciones visuales y mejoras en el rendimiento del juego.',
+    'date': 'Hoy • 6:40 PM',
+    'icon': Icons.system_update,
   },
   {
-    'title': 'Experto en Cultivos',
-    'description': 'Cultiva 50 plantas diferentes',
-    'progress': 0.7,
-    'isUnlocked': true,
+    'title': 'Modo Historia — Próxima expansión 📖',
+    'description': 'Se añadirá un nuevo capítulo con personajes inéditos y misiones exclusivas.',
+    'date': 'Ayer • 3:10 PM',
+    'icon': Icons.auto_stories,
   },
   {
-    'title': 'Maestro del Riego',
-    'description': 'Mantén 10 plantas hidratadas por 7 días',
-    'progress': 0.3,
-    'isUnlocked': false,
+    'title': 'Nueva mecánica de logros 🏆',
+    'description': 'El sistema de logros será conectado con la app para mostrar progreso en tiempo real.',
+    'date': 'Hace 2 días',
+    'icon': Icons.emoji_events,
   },
   {
-    'title': 'Coleccionista Verde',
-    'description': 'Desbloquea todas las semillas disponibles',
-    'progress': 0.5,
-    'isUnlocked': true,
+    'title': 'Optimización del juego ⚙️',
+    'description': 'Se redujeron los tiempos de carga y se mejoró la fluidez en dispositivos de gama baja.',
+    'date': 'Hace 4 días',
+    'icon': Icons.speed,
   },
   {
-    'title': 'Rey de la Cosecha',
-    'description': 'Obtén una cosecha perfecta',
-    'progress': 0.0,
-    'isUnlocked': false,
+    'title': 'Próximamente: Modo Multijugador 🌐',
+    'description': 'Se está trabajando en un sistema de salas privadas para partidas entre amigos.',
+    'date': 'Hace 1 semana',
+    'icon': Icons.group,
+  },
+  {
+    'title': 'Nuevos objetos y skins 🎨',
+    'description': 'Se agregarán diseños exclusivos y objetos personalizables para tu personaje.',
+    'date': 'Hace 10 días',
+    'icon': Icons.brush,
   },
 ];

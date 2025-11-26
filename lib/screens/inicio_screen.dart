@@ -78,15 +78,15 @@ class _InicioScreenState extends State<InicioScreen>
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(25),
-                    image: DecorationImage(
-                      image:
-                          const AssetImage('assets/images/farm_background.png'),
-                      fit: BoxFit.cover,
-                      colorFilter: ColorFilter.mode(
-                        Colors.black.withOpacity(0.2),
-                        BlendMode.darken,
-                      ),
-                    ),
+                    // image: DecorationImage(
+                    //   // image:
+                    //   //     const AssetImage('assets/images/farm_background.png'),
+                    //   fit: BoxFit.cover,
+                    //   colorFilter: ColorFilter.mode(
+                    //     Colors.black.withOpacity(0.2),
+                    //     BlendMode.darken,
+                    //   ),
+                    // ),
                   ),
                   // --- 3. Logo Integrado ---
                   child: Center(
@@ -103,7 +103,7 @@ class _InicioScreenState extends State<InicioScreen>
                       ),
                       child: Image.asset(
                         'assets/images/thelastfarm.png',
-                        height: screenHeight * 0.2, // Ajustado
+                        height: screenHeight * 0.2,
                       ),
                     ),
                   ),
@@ -114,7 +114,7 @@ class _InicioScreenState extends State<InicioScreen>
                 const Text(
                   '¡Bienvenido a la aventura!',
                   style: TextStyle(
-                    fontSize: 28, // Más grande
+                    fontSize: 28, 
                     fontWeight: FontWeight.bold,
                     color: kColorMarronOscuro,
                     fontFamily: 'PixelifySans',
@@ -122,6 +122,7 @@ class _InicioScreenState extends State<InicioScreen>
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 15),
+                
                 // --- 5. Texto Adicional ---
                 Text(
                   'Tu granja te espera. Cosecha, completa logros y conviértete en el mejor granjero.',

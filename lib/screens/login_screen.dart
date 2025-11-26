@@ -19,10 +19,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _loading = false;
 
-  // --- VALIDACIONES Y MENSAJES BONITOS ---
+  // --- VALIDACIONES Y LÓGICA DE LOGIN ---
   void _showMessage(String message, {bool error = false}) {
     final snackBar = SnackBar(
-      content: Text(message, style: const TextStyle(fontFamily: 'PixelifySans')),
+      content: Text(
+        message,
+        style: const TextStyle(fontFamily: 'PixelifySans'),
+      ),
       backgroundColor: error ? Colors.redAccent : kColorVerdeClaro,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -35,7 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // --- VALIDACIÓN DE CAMPOS VACÍOS ---
     if (email.isEmpty || password.isEmpty) {
       _showMessage("Por favor, ingresa tu email y contraseña", error: true);
       return;
@@ -45,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final url = Uri.parse('$apiBaseUrl/auth/login');
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -55,16 +58,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['idToken'] == null || data['uid'] == null) {
-          _showMessage("No se recibieron los datos de usuario, intenta de nuevo", error: true);
+
+        // JWT + user
+        if (data['token'] == null || data['user'] == null) {
+          _showMessage("Respuesta inválida del servidor", error: true);
           return;
         }
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('idToken', data['idToken']);
-        await prefs.setString('uid', data['uid']);
+        // await prefs.setString('idToken', data['token']);
+        await prefs.setString('jwtToken', data['token']);
+        await prefs.setString('uid', data['user']['email']);
 
-        _showMessage("¡Bienvenido de nuevo, ${email.split('@')[0]}!");
+        _showMessage("¡Bienvenido de nuevo, ${data['user']['email']}!");
 
         Navigator.pushReplacement(
           context,
@@ -77,13 +83,17 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       setState(() => _loading = false);
-      _showMessage("No se pudo conectar al servidor. Revisa tu conexión", error: true);
+      _showMessage(
+        "No se pudo conectar al servidor. Revisa tu conexión",
+        error: true,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    
 
     return Scaffold(
       backgroundColor: kColorBeigeFondo,
@@ -130,8 +140,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    labelStyle: TextStyle(color: kColorMarronOscuro.withOpacity(0.7)),
-                    prefixIcon: Icon(Icons.email_outlined, color: kColorMarronOscuro),
+                    labelStyle: TextStyle(
+                      color: kColorMarronOscuro.withOpacity(0.7),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.email_outlined,
+                      color: kColorMarronOscuro,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -140,7 +155,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: kColorMarronOscuro, width: 2),
+                      borderSide: BorderSide(
+                        color: kColorMarronOscuro,
+                        width: 2,
+                      ),
                     ),
                   ),
                 ),
@@ -151,8 +169,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
-                    labelStyle: TextStyle(color: kColorMarronOscuro.withOpacity(0.7)),
-                    prefixIcon: Icon(Icons.lock_outline, color: kColorMarronOscuro),
+                    labelStyle: TextStyle(
+                      color: kColorMarronOscuro.withOpacity(0.7),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.lock_outline,
+                      color: kColorMarronOscuro,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -161,7 +184,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: kColorMarronOscuro, width: 2),
+                      borderSide: BorderSide(
+                        color: kColorMarronOscuro,
+                        width: 2,
+                      ),
                     ),
                   ),
                   obscureText: true,
@@ -186,7 +212,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? const SizedBox(
                             height: 24,
                             width: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
                           )
                         : const Text(
                             'INGRESAR',
@@ -208,7 +237,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Text(
                     '¿No tienes cuenta? Regístrate aquí',
-                    style: TextStyle(color: kColorMarronOscuro.withOpacity(0.9)),
+                    style: TextStyle(
+                      color: kColorMarronOscuro.withOpacity(0.9),
+                    ),
                   ),
                 ),
               ],

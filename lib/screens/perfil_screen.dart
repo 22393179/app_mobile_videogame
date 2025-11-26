@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
-import 'menu_screen.dart'; // <--- Importa tu MenuScreen
+import 'menu_screen.dart';
+import 'package:image_picker/image_picker.dart';
 
+// ======================================================
+// PERFIL SCREEN
+// ======================================================
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
 
@@ -11,290 +15,471 @@ class PerfilScreen extends StatefulWidget {
 }
 
 class _PerfilScreenState extends State<PerfilScreen> {
-  Map<String, dynamic>? userData;
-  bool _loading = true;
+  Map<String, dynamic>? user;
+  bool loading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _loadUser();
   }
 
-  Future<void> _loadUserData() async {
+  Future<void> _loadUser() async {
     final data = await AuthService().getUserProfile();
     setState(() {
-      userData = data;
-      _loading = false;
+      user = data?['user'];
+      loading = false;
     });
   }
 
+  // ======================================================
+  // LOGOUT BONITO
+  // ======================================================
   Future<void> _logout() async {
     await AuthService().logout();
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 10),
-              Expanded(child: Text("Has cerrado sesión desde tu perfil")),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          duration: const Duration(seconds: 2),
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          "Has cerrado sesión",
+          style: TextStyle(fontSize: 16),
         ),
-      );
-      // Pequeño delay para que se vea el SnackBar antes de ir al login
-      await Future.delayed(const Duration(milliseconds: 500));
-      Navigator.pushAndRemoveUntil(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (_) => false,
+        );
+      }
+    });
+  }
+
+  // ======================================================
+  // SUBIR FOTO
+  // ======================================================
+  Future<void> _changePhoto() async {
+    final picker = ImagePicker();
+    final XFile? img = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+
+    if (img == null) return;
+
+    final url = await AuthService().uploadProfilePhoto(img.path);
+
+    if (url == null) {
+      ScaffoldMessenger.of(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-        (route) => false,
-      );
+      ).showSnackBar(const SnackBar(content: Text("Error al subir foto")));
+      return;
+    }
+
+    setState(() => user!['photoURL'] = url);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Foto actualizada")));
+  }
+
+  // ======================================================
+  // ELIMINAR FOTO
+  // ======================================================
+  Future<void> _deletePhoto() async {
+    final ok = await AuthService().deleteProfilePhoto();
+
+    if (ok) {
+      setState(() => user!['photoURL'] = "");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Foto eliminada")));
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Error al eliminar foto")));
     }
   }
 
-  // --- Tarjeta de estadísticas ---
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color kColorVerdeClaro,
-    Color kColorMarronOscuro,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            spreadRadius: 1,
-            blurRadius: 5,
-          ),
-        ],
+  // ======================================================
+  // BOTÓN REDONDO PARA FOTO
+  // ======================================================
+  Widget _circleButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.white, size: 26),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: kColorVerdeClaro, size: 20),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: kColorMarronOscuro.withOpacity(0.8),
-                    fontFamily: 'PixelifySans',
+    );
+  }
+
+  // ======================================================
+  // HELPERS: avatar and experience sections (refactor)
+  // ======================================================
+  Widget _buildAvatarSection(String? photoUrl, String letter, Color brown, Color green) {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: MediaQuery.of(context).size.width * 0.20,
+          backgroundColor: brown.withOpacity(0.5),
+          child: (photoUrl != null && photoUrl.isNotEmpty)
+              ? ClipOval(
+                  child: Image.network(
+                    photoUrl,
+                    fit: BoxFit.cover,
+                    width: MediaQuery.of(context).size.width * 0.40,
+                    height: MediaQuery.of(context).size.width * 0.40,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Icon(
+                          Icons.error_outline,
+                          color: Colors.white70,
+                        ),
+                      );
+                    },
                   ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: kColorMarronOscuro,
-              fontFamily: 'PixelifySans',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- Fila de información ---
-  Widget _buildInfoRow(String label, String value, Color kColorMarronOscuro) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                color: kColorMarronOscuro.withOpacity(0.7),
-                fontFamily: 'PixelifySans',
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: kColorMarronOscuro,
-                fontFamily: 'PixelifySans',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // --- Colores ---
-    const kColorCrema = Color(0xFFF5EFE6);
-    const kColorMarronOscuro = Color(0xFF6B4B3E);
-    const kColorVerdeClaro = Color(0xFF8BC34A);
-
-    if (_loading) {
-      return const Scaffold(
-        backgroundColor: kColorCrema,
-        body: Center(
-          child: CircularProgressIndicator(color: kColorMarronOscuro),
-        ),
-      );
-    }
-
-    final auth = userData?['auth'] ?? {};
-    final profile = userData?['profile'] ?? {};
-    final stats = profile['profile'] ?? {};
-    final String displayName =
-        auth['name'] ?? profile['displayName'] ?? 'Jugador';
-    final String displayLetter =
-        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'J';
-
-    return Scaffold(
-      backgroundColor: kColorCrema,
-      appBar: AppBar(
-        backgroundColor: kColorCrema,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: kColorMarronOscuro),
-        // Flecha de regreso manda al MenuScreen
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: kColorMarronOscuro),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MenuScreen()),
-            );
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: kColorMarronOscuro),
-            tooltip: 'Cerrar sesión',
-            onPressed: _logout,
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              CircleAvatar(
-                radius: MediaQuery.of(context).size.width * 0.18,
-                backgroundColor: kColorMarronOscuro,
-                child: Text(
-                  displayLetter,
+                )
+              : Text(
+                  letter,
                   style: const TextStyle(
                     fontSize: 70,
                     color: Colors.white,
                     fontFamily: 'PixelifySans',
                   ),
                 ),
-              ),
-              const SizedBox(height: 15),
-              Text(
-                displayName,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: kColorMarronOscuro,
-                  fontFamily: 'PixelifySans',
-                ),
-              ),
-              const SizedBox(height: 30),
-              // Tarjetas de estadísticas
-              Row(
-                children: [
-                  Flexible(
-                    child: _buildStatCard(
-                        'NIVEL',
-                        '${stats['level'] ?? 1}',
-                        Icons.star_border_outlined,
-                        kColorVerdeClaro,
-                        kColorMarronOscuro),
-                  ),
-                  const SizedBox(width: 15),
-                  Flexible(
-                    child: _buildStatCard(
-                        'EXPERIENCIA',
-                        '${stats['xp'] ?? 0}',
-                        Icons.trending_up_rounded,
-                        kColorVerdeClaro,
-                        kColorMarronOscuro),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              // Contenedor de información
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      spreadRadius: 1,
-                      blurRadius: 5,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10.0),
-                      child: Text(
-                        'Información de la Cuenta',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: kColorMarronOscuro,
-                          fontFamily: 'PixelifySans',
-                        ),
+        ),
+
+        const SizedBox(height: 14),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _circleButton(
+              icon: Icons.camera_alt,
+              color: green,
+              onTap: _changePhoto,
+            ),
+            if (photoUrl != null && photoUrl.isNotEmpty) ...[
+              const SizedBox(width: 14),
+              _circleButton(
+                icon: Icons.delete,
+                color: Colors.red,
+                onTap: () => showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text("Eliminar foto"),
+                    content: const Text("¿Seguro que deseas eliminar tu foto?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text("Cancelar"),
                       ),
-                    ),
-                    Divider(color: kColorMarronOscuro.withOpacity(0.2)),
-                    _buildInfoRow('Email', '${auth['email'] ?? ''}', kColorMarronOscuro),
-                    Divider(height: 1, color: kColorMarronOscuro.withOpacity(0.1)),
-                    _buildInfoRow('UID', '${auth['uid'] ?? ''}', kColorMarronOscuro),
-                  ],
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context, true);
+                          _deletePhoto();
+                        },
+                        child: const Text("Eliminar"),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExperienceSection(Map<String, dynamic> profile, Color brown, Color green, Color gold, Color lightGray) {
+    final int level = profile['level'] ?? 1;
+    final int xp = profile['xp'] ?? 0;
+    final int xpTarget = 2000;
+    final double xpProgress = (xpTarget > 0) ? (xp / xpTarget).clamp(0.0, 1.0) : 0.0;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 110,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: gold,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 8)],
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '$level',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: brown,
+                    fontFamily: 'PixelifySans',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Nivel',
+                style: TextStyle(
+                  color: brown.withOpacity(0.9),
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'PixelifySans',
                 ),
               ),
             ],
           ),
+        ),
+
+        const SizedBox(width: 16),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Experiencia',
+                      style: TextStyle(
+                        color: brown.withOpacity(0.9),
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'PixelifySans',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 110,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(Icons.star, size: 14, color: gold),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            '$xp / $xpTarget XP',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              color: brown.withOpacity(0.8),
+                              fontFamily: 'PixelifySans',
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: LinearProgressIndicator(
+                  minHeight: 16,
+                  value: xpProgress,
+                  backgroundColor: lightGray.withOpacity(0.6),
+                  valueColor: AlwaysStoppedAnimation<Color>(green),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                xpProgress >= 1.0 ? '¡Listo para subir de nivel!' : '${(xpProgress * 100).toInt()}% hacia siguiente nivel',
+                style: TextStyle(
+                  color: brown.withOpacity(0.75),
+                  fontFamily: 'PixelifySans',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ======================================================
+  // ROW INFO
+  // ======================================================
+  Widget _rowInfo(String label, String value, Color brown) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              color: brown.withOpacity(0.75),
+              fontFamily: 'PixelifySans',
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: brown,
+                fontFamily: 'PixelifySans',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ======================================================
+  // INICIAL SEGURA
+  // ======================================================
+  String _getInitial(String name) {
+    if (name.trim().isEmpty) return "J";
+    return name.trim()[0].toUpperCase();
+  }
+
+  // ======================================================
+  // BUILD
+  // ======================================================
+  @override
+  Widget build(BuildContext context) {
+    const crema = Color(0xFFF5EFE6);
+    const brown = Color(0xFF6B4B3E);
+    const green = Color(0xFF8BC34A);
+    const gold = Color(0xFFFFB74D);
+    const lightGray = Color(0xFFE0E0E0);
+
+    if (loading) {
+      return const Scaffold(
+        backgroundColor: crema,
+        body: Center(child: CircularProgressIndicator(color: brown)),
+      );
+    }
+
+    final photoUrl = user?['photoURL'];
+    final profile = user?['profile'] ?? {};
+    final displayName = user?['displayName'] ?? 'Jugador';
+    final letter = _getInitial(displayName);
+
+    return Scaffold(
+      backgroundColor: crema,
+      appBar: AppBar(
+        backgroundColor: crema,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: brown),
+          onPressed: () => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MenuScreen()),
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: brown),
+            onPressed: _logout,
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Avatar + action buttons (extracted)
+            _buildAvatarSection(photoUrl, letter, brown, green),
+
+            const SizedBox(height: 50),
+
+            Text(
+              displayName,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: brown,
+                fontFamily: 'PixelifySans',
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Nivel y barra de experiencia (extraído)
+            _buildExperienceSection(profile, brown, green, gold, lightGray),
+
+            const SizedBox(height: 28),
+
+            // INFO DE CUENTA
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    "Información de la Cuenta",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: brown,
+                      fontFamily: 'PixelifySans',
+                    ),
+                  ),
+                  Divider(color: brown.withOpacity(0.2)),
+                  _rowInfo("Email", user?['email'] ?? "", brown),
+                  Divider(color: brown.withOpacity(0.1)),
+                  _rowInfo("UID", user?['uid'] ?? "", brown),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

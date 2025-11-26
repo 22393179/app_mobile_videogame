@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'screens/inicio_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// Colores de la paleta
+
 const Color kColorBeigeFondo = Color(0xFFFFF8E7);
 const Color kColorMarronOscuro = Color(0xFF654321);
 const Color kColorVerdeClaro = Color(0xFF95C23D);
@@ -13,10 +13,10 @@ const Color kColorGrisClaro = Color(0xFFE0E0E0);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Cargar variables de entorno
+  
   await dotenv.load(fileName: ".env");
 
-  // Forzar orientación vertical
+  
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../widgets/bottom_nav_bar.dart';
+
+// Importa tus pantallas reales
 import 'cultivos_screen.dart';
 import 'logros_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
 
-  // --- WIDGET COMPLETAMENTE NUEVO PARA LAS SECCIONES ---
-  /// Crea una tarjeta de navegación grande, coherente con las tarjetas del perfil.
+  // --- TARJETA DE NAVEGACIÓN GENERAL ---
   Widget _buildMenuCard({
     required BuildContext context,
     required String title,
@@ -35,14 +36,12 @@ class MenuScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Icono con fondo de color
             CircleAvatar(
               radius: 28,
               backgroundColor: iconColor.withOpacity(0.1),
               child: Icon(icon, size: 28, color: iconColor),
             ),
             const SizedBox(width: 16),
-            // Textos
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,9 +67,11 @@ class MenuScreen extends StatelessWidget {
                 ],
               ),
             ),
-            // Flecha
-            Icon(Icons.arrow_forward_ios,
-                color: kColorMarronOscuro.withOpacity(0.5), size: 16),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: kColorMarronOscuro.withOpacity(0.5),
+              size: 16,
+            ),
           ],
         ),
       ),
@@ -80,46 +81,40 @@ class MenuScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 1. Fondo coherente con el resto de la app
       backgroundColor: kColorBeigeFondo,
-      // 2. ¡AppBar eliminada!
       appBar: null,
-      // 3. Cuerpo de la pantalla
+
       body: SafeArea(
-        child: LayoutBuilder( // 1. Usar LayoutBuilder para obtener la altura
+        child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
               padding: const EdgeInsets.all(20.0),
-              child: ConstrainedBox( // 2. Forzar altura mínima
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center, // 3. Centrar verticalmente
-                  crossAxisAlignment: CrossAxisAlignment.center, // 4. Centrar logo y título
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    // --- INICIO DE LOGO ---
-                    // 5. Se añade el logo con brillo
+                    // Logo
                     Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: kColorDorado.withOpacity(0.5), // Brillo
+                            color: kColorDorado.withOpacity(0.5),
                             spreadRadius: 5,
-                            blurRadius: 20, // Difuminado
+                            blurRadius: 20,
                           ),
                         ],
                       ),
                       child: Image.asset(
                         'assets/images/thelastfarm.png',
-                        height: 120, // 6. Un tamaño con presencia
+                        height: 120,
                       ),
                     ),
-                    const SizedBox(height: 30), // Espacio
-                    // --- FIN DE LOGO ---
 
-                    // 4. Título de la pantalla (CORREGIDO)
+                    const SizedBox(height: 30),
+
                     const Text(
                       'Menú Principal',
                       style: TextStyle(
@@ -130,9 +125,10 @@ class MenuScreen extends StatelessWidget {
                       ),
                       textAlign: TextAlign.center,
                     ),
+
                     const SizedBox(height: 25),
 
-                    // 5. Tarjeta de "Cosecha" (AÑADIDA)
+                    // 📌 PRIMERA TARJETA — Cosecha
                     _buildMenuCard(
                       context: context,
                       title: 'Cosecha',
@@ -143,34 +139,38 @@ class MenuScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const CultivosScreen()),
+                            builder: (context) => const CultivosScreen(),
+                          ),
                         );
                       },
                     ),
+
                     const SizedBox(height: 15),
 
-                    // 6. Tarjeta de "Logros" (AÑADIDA Y CORREGIDA)
+                    // 📌 SEGUNDA TARJETA — Novedades
                     _buildMenuCard(
                       context: context,
-                      title: 'Logros',
-                      description: 'Revisa tus medallas y trofeos.',
-                      icon: Icons.emoji_events,
+                      title: 'Novedades',
+                      description: 'Últimos eventos de tu granja.',
+                      icon: Icons.new_releases,
                       iconColor: kColorDorado,
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const LogrosScreen()),
+                            builder: (context) => const NovedadesScreen(),
+                          ),
                         );
                       },
                     ),
-                  ], // Cierre de children
-                ), // Cierre de Column
-              ), // Cierre de ConstrainedBox
-            ); // Cierre de SingleChildScrollView
+                  ],
+                ),
+              ),
+            );
           },
         ),
       ),
+
       bottomNavigationBar: buildBottomNavBar(context, 1),
     );
   }
